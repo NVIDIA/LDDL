@@ -336,7 +336,7 @@ shards. Among these shards, the number of samples could differ by at most 1.
 
 We can get the LDDL dataloader for BERT pretraining via 
 `lddl.torch.get_bert_pretrain_data_loader` (please refer to the 
-[in-code documentation](lddl/torch/bert.py:218) of this function). Afterwards,
+[in-code documentation](lddl/torch/bert.py#218) of this function). Afterwards,
 we can use it like a normal PyTorch DataLoader instance. For example,
 ```python
 import argparse
