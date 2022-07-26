@@ -35,7 +35,7 @@ pip install git+https://github.com/NVIDIA/lddl.git
 or
 ```bash
 git clone https://github.com/NVIDIA/lddl.git
-pip install lddl
+pip install ./lddl
 ```
 `pip` would also automatically install all LDDL's other Python package 
 dependencies.
@@ -179,7 +179,7 @@ Please use the `--help` flag to check the exact usage of each command (e.g.,
 LDDL currently supports the following data loaders:
 - BERT
   - [PyTorch](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/LanguageModeling/BERT)
-    - Pretraining: [`lddl.torch.get_bert_pretrain_data_loader`](lddl/torch/bert.py:175)
+    - Pretraining: [`lddl.torch.get_bert_pretrain_data_loader`](lddl/torch/bert.py#L199)
 
 Please refer to their in-code documentation for more details.
 
@@ -336,7 +336,7 @@ shards. Among these shards, the number of samples could differ by at most 1.
 
 We can get the LDDL dataloader for BERT pretraining via 
 `lddl.torch.get_bert_pretrain_data_loader` (please refer to the 
-[in-code documentation](lddl/torch/bert.py:175) of this function). Afterwards,
+[in-code documentation](lddl/torch/bert.py#L199) of this function). Afterwards,
 we can use it like a normal PyTorch DataLoader instance. For example,
 ```python
 import argparse
@@ -417,4 +417,4 @@ time.
 We welcome any form of contribution! The simplest contribution would be to try
 LDDL on your own NLP tasks where data preprocessing and loading is a headache 
 for you. If you find rough edges for your specific use case, please file a 
-GitHub issue and tag `@jojennin`.
+GitHub issue.
