@@ -32,10 +32,9 @@ import time
 from mpi4py import MPI
 
 from lddl.types import File
-from lddl.utils import (get_all_files_paths_under, mkdir,
-                        expand_outdir_and_mkdir, get_all_parquets_under,
-                        get_all_bin_ids, get_file_paths_for_bin_id,
-                        get_dir_path_for_bin_id, get_num_samples_of_parquet,
+from lddl.utils import (get_all_files_paths_under, expand_outdir_and_mkdir,
+                        get_all_parquets_under, get_all_bin_ids,
+                        get_file_paths_for_bin_id, get_num_samples_of_parquet,
                         attach_bool_arg)
 
 
@@ -53,8 +52,9 @@ class Shard:
   @property
   def num_samples(self):
     n = 0
-    for input_file in self._input_files:
-      n += input_file.num_samples
+    if self._input_files is not None:
+      for input_file in self._input_files:
+        n += input_file.num_samples
     if self._output_file is not None:
       n += self._output_file.num_samples
     return n
@@ -166,7 +166,6 @@ class Progress:
         base_num_samples_per_shard: num_shards - total_num_samples % num_shards,
         base_num_samples_per_shard + 1: total_num_samples % num_shards,
     }
-    self._targets = dict(filter(lambda t: t[1] > 0, self._targets.items()))
     self._ready_shards = []
 
   def __repr__(self):
@@ -247,7 +246,7 @@ def _build_shards(files, num_shards, outdir, keep_orig=True, postfix=''):
   return [
       Shard(
           idx,
-          files[idx::num_shards] if idx < len(files) else [],
+          files[idx::num_shards] if idx < len(files) else None,
           outdir,
           keep_orig=keep_orig,
           postfix=postfix,
@@ -371,13 +370,12 @@ def _balance(file_paths, num_shards, outdir, keep_orig=True, postfix=''):
 
 
 def _store_num_samples_per_shard(shards, outdir):
-  if get_rank() == 0:
-    num_samples_per_shard = {
-        os.path.basename(shard._output_file.path):
-        shard._output_file.num_samples for shard in shards
-    }
-    with open(os.path.join(outdir, '.num_samples.json'), 'w') as f:
-      json.dump(num_samples_per_shard, f)
+  num_samples_per_shard = {
+      os.path.basename(shard._output_file.path): shard._output_file.num_samples
+      for shard in shards
+  }
+  with open(os.path.join(outdir, '.num_samples.json'), 'w') as f:
+    json.dump(num_samples_per_shard, f)
 
 
 def main(args):
@@ -396,13 +394,11 @@ def main(args):
   if args.bin_ids is None:
     if get_rank() == 0:
       print('Load balancing for unbinned files ...')
-    ready_shards = _balance(
-        file_paths,
-        args.num_shards,
-        args.outdir,
-        keep_orig=args.keep_orig,
-    )
-    _store_num_samples_per_shard(ready_shards, args.outdir)
+    ready_shards.extend(
+        _balance(file_paths,
+                 args.num_shards,
+                 args.outdir,
+                 keep_orig=args.keep_orig))
   else:
     if get_rank() == 0:
       print('Load balancing for bin_ids = {} ...'.format(args.bin_ids))
@@ -410,15 +406,16 @@ def main(args):
       if get_rank() == 0:
         print('Balancing bin_id = {} ...'.format(bin_id))
       file_paths_current_bin = get_file_paths_for_bin_id(file_paths, bin_id)
-      outdir_current_bin = get_dir_path_for_bin_id(args.outdir, bin_id)
-      mkdir(outdir_current_bin)
-      ready_shards_current_bin = _balance(
-          file_paths_current_bin,
-          args.num_shards,
-          outdir_current_bin,
-          keep_orig=args.keep_orig,
-      )
-      _store_num_samples_per_shard(ready_shards_current_bin, outdir_current_bin)
+      ready_shards.extend(
+          _balance(
+              file_paths_current_bin,
+              args.num_shards,
+              args.outdir,
+              keep_orig=args.keep_orig,
+              postfix='_{}'.format(bin_id),
+          ))
+  if get_rank() == 0:
+    _store_num_samples_per_shard(ready_shards, args.outdir)
 
 
 def console_script():

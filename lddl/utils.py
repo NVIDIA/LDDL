@@ -54,12 +54,10 @@ def get_all_parquets_under(path):
 def get_all_bin_ids(file_paths):
 
   def is_binned_parquet(p):
-    return 'bin_id=' in os.path.dirname(p).split('/')[-1]
-
-  bin_id_prefix_length = len('bin_id=')
+    return '_' in os.path.splitext(p)[1]
 
   def get_bin_id(p):
-    return int(os.path.dirname(p).split('/')[-1][bin_id_prefix_length:])
+    return int(os.path.splitext(p)[1].split('_')[-1])
 
   bin_ids = list(
       sorted(set((get_bin_id(p) for p in file_paths if is_binned_parquet(p)))))
@@ -72,12 +70,8 @@ def get_all_bin_ids(file_paths):
 def get_file_paths_for_bin_id(file_paths, bin_id):
   return [
       p for p in file_paths
-      if 'bin_id={}'.format(bin_id) == os.path.dirname(p).split('/')[-1]
+      if '.parquet_{}'.format(bin_id) == os.path.splitext(p)[1]
   ]
-
-
-def get_dir_path_for_bin_id(base_dir, bin_id):
-  return os.path.join(base_dir, 'bin_id={}'.format(bin_id))
 
 
 def get_num_samples_of_parquet(path):

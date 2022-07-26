@@ -37,8 +37,8 @@ import time
 import transformers
 from collections import deque, namedtuple
 
-from ..dask.readers import (read_wikipedia, read_books, read_common_crawl,
-                            split_id_text, estimate_block_size)
+from ..readers import (read_wikipedia, read_books, read_common_crawl,
+                       split_id_text, estimate_block_size)
 from lddl.utils import (expand_outdir_and_mkdir, attach_bool_arg,
                         serialize_np_array, deserialize_np_array)
 from lddl.download.utils import parse_str_of_num_bytes
@@ -441,18 +441,6 @@ def _get_pairs(
   return bag_documents.map_partitions(_to_partition_pairs)
 
 
-def _assign_bin_ids(pairs, target_seq_length=128, bin_size=8):
-  nbins = target_seq_length // bin_size
-
-  def _set_bin_id(pair):
-    bin_id = (pair['num_tokens'] - 1) // bin_size
-    bin_id = max(0, min(nbins - 1, bin_id))
-    pair['bin_id'] = bin_id
-    return pair
-
-  return pairs.map(_set_bin_id)
-
-
 def _save_parquet(
     pairs,
     path,
@@ -472,8 +460,6 @@ def _save_parquet(
       'is_random_next': pa.bool_(),
       'num_tokens': pa.uint16(),
   }
-  partition_on = None
-
   if masking:
     base_meta.update({
         'masked_lm_positions': bytes,
@@ -483,24 +469,33 @@ def _save_parquet(
         'masked_lm_positions': pa.binary(),
         'masked_lm_labels': pa.string()
     })
-
-  if bin_size is not None:
-    pairs = _assign_bin_ids(
-        pairs,
-        target_seq_length=target_seq_length,
-        bin_size=bin_size,
+  if bin_size is None:
+    pairs.to_dataframe(meta=base_meta).to_parquet(
+        path,
+        engine='pyarrow',
+        write_index=False,
+        schema=base_schema,
     )
-    base_meta.update({'bin_id': int})
-    base_schema.update({'bin_id': pa.uint8()})
-    partition_on = ['bin_id']
-
-  pairs.to_dataframe(meta=base_meta).to_parquet(
-      path,
-      engine='pyarrow',
-      write_index=False,
-      schema=base_schema,
-      partition_on=partition_on,
-  )
+  else:
+    nbins = target_seq_length // bin_size
+    pairs.to_dataframe = to_dataframe_binned
+    dfs = pairs.to_dataframe(
+        pairs,
+        meta=base_meta,
+        bin_size=bin_size,
+        nbins=nbins,
+    )
+    to_parquet_binned(
+        dfs,
+        path,
+        nbins,
+        engine='pyarrow',
+        write_index=False,
+        schema={
+            **base_schema,
+            'bin_id': pa.int64(),
+        },
+    )
 
 
 def _save_txt(

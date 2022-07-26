@@ -144,10 +144,7 @@ class ParquetDataset(IterableDataset):
     self._files = self._get_files(file_paths)
     max_num_samples_per_file = max((f.num_samples for f in self._files))
     min_num_samples_per_file = min((f.num_samples for f in self._files))
-    assert min_num_samples_per_file in {
-        max_num_samples_per_file - 1,
-        max_num_samples_per_file,
-    }
+    assert min_num_samples_per_file + 1 == max_num_samples_per_file
     self._num_samples_per_file = min_num_samples_per_file
     total_num_samples = sum((f.num_samples for f in self._files))
     num_samples_lost = (total_num_samples -

@@ -16,7 +16,7 @@ RUN conda install -y jemalloc
 # Copy the lddl source code to /workspace/lddl in the image, then install.
 WORKDIR /workspace/lddl
 ADD . .
-RUN pip install .[torch]
+RUN pip install ./
 
 # Download the NLTK model data.
 RUN python -m nltk.downloader punkt
