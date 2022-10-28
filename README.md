@@ -24,7 +24,7 @@ memory allocator is an alternative (to the glibc memory allocator) that might
 offer better performance during data preprocessing. You can install jemalloc 
 via:
 ```bash
-conda install jemalloc
+apt-get install libjemalloc-dev
 ```
 **Step 2 [required]:** LDDL can be installed from the source by running 
 `pip install <target>` where `<target>` is the project root directory of LDDL or
@@ -251,10 +251,8 @@ needs to be a positive integer multiple of
 - if you want to enable sequence binning, you can set the `--bin-size` flag. The
 `i`-th bin contains sequences that have from `(i - 1) * <bin size> + 1` to 
 `i * <bin size>` tokens.
-- `<path to libjemalloc.so>` depends on the conda environment that `jemalloc` 
-was installed with. If installed by `root`, it can often be found at 
-`/opt/conda/lib/libjemalloc.so`; if installed by an non-root user, it can often
-be found at `$CONDA_PREFIX/lib/libjemalloc.so`.
+- `<path to libjemalloc.so>` will depend on your Linux distribution. For 
+- Debian-based distributions (e.g., Ubuntu), it can be found at `/usr/lib/x86_64-linux-gnu/libjemalloc.so`.
 
 If you want to use the memory allocator from glibc instead of jemalloc, you 
 can omit the `-x LD_PRELOAD=<path to libjemalloc.so>` flag to `mpirun`. Either 
@@ -272,7 +270,7 @@ mpirun \
   --oversubscribe \
   --allow-run-as-root \
   -np 64 \
-  -x LD_PRELOAD=/opt/conda/lib/libjemalloc.so \
+  -x LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so \
     preprocess_bert_pretrain \
       --schedule mpi \
       --vocab-file data/vocab/bert-en-uncased.txt \
@@ -285,7 +283,7 @@ mpirun \
 ```
 would use a total of `64` processes to run the preprocessor for BERT Phase 2 
 pretraining (whose maximum sequence length is `512`). In this case, the shared
-object of jemalloc is located at `/opt/conda/lib/libjemalloc.so`; the vocab file
+object of jemalloc is located at `/usr/lib/x86_64-linux-gnu/libjemalloc.so`; the vocab file
 is located at `data/vocab/bert-en-uncased.txt`; the Wikipedia corpus is 
 downloaded at `data/wikipedia/`; the preprocessor would store the unbalanced
 (roughly `4096`) Parquet shards at `data/bert/pretrain/phase2/bin_size_64/`;
