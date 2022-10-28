@@ -1,6 +1,6 @@
 # Language Datasets and Data Loaders
 
-Language Datasets and Data Loaders (LDDL) is an utility library that minimizes
+Language Datasets and Data Loaders (LDDL) is a utility library that minimizes
 the friction during dataset retrieval, preprocessing and loading for the 
 language models in 
 _[NVIDIA Deep Learning Examples](https://github.com/NVIDIA/DeepLearningExamples)_.
