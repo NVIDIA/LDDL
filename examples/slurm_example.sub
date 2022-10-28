@@ -78,7 +78,7 @@ srun \
   --container-mounts="${mounts}" \
   --container-workdir=${workdir} \
   --ntasks-per-node=${tasks_per_node} \
-  --export=ALL,LD_PRELOAD=/opt/conda/lib/libjemalloc.so \
+  --export=ALL,LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so \
     preprocess_bert_pretrain \
       --schedule mpi \
       --vocab-file ${vocab_path} \

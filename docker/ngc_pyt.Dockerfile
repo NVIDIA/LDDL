@@ -11,7 +11,7 @@ RUN apt-get update -qq && \
     apt-get install -y git vim tmux && \
     rm -rf /var/cache/apk/*
 
-RUN conda install -y jemalloc
+RUN apt-get install -y libjemalloc-dev
 
 # Copy the lddl source code to /workspace/lddl in the image, then install.
 WORKDIR /workspace/lddl

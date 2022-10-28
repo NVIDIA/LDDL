@@ -51,7 +51,7 @@ wget ${vocab_source_url} -O ${vocab_path}
 # sequence binning enabled (where the bin size is 64).
 readonly num_shards=4096
 readonly bin_size=64
-readonly jemalloc_path=/opt/conda/lib/libjemalloc.so
+readonly jemalloc_path=/usr/lib/x86_64-linux-gnu/libjemalloc.so
 readonly pretrain_input_path=data/bert/pretrain/phase2/bin_size_${bin_size}/
 bash docker/interactive.sh "" " \
   mpirun \
