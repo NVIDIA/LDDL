@@ -252,7 +252,7 @@ needs to be a positive integer multiple of
 `i`-th bin contains sequences that have from `(i - 1) * <bin size> + 1` to 
 `i * <bin size>` tokens.
 - `<path to libjemalloc.so>` will depend on your Linux distribution. For 
-- Debian-based distributions, it can be found at `/usr/lib/x86_64-linux-gnu/libjemalloc.so`.
+Debian-based distributions, it can be found at `/usr/lib/x86_64-linux-gnu/libjemalloc.so`.
 
 If you want to use the memory allocator from glibc instead of jemalloc, you 
 can omit the `-x LD_PRELOAD=<path to libjemalloc.so>` flag to `mpirun`. Either 
