@@ -7,10 +7,11 @@ _[NVIDIA Deep Learning Examples](https://github.com/NVIDIA/DeepLearningExamples)
 
 The current capabilities of LDDL include:
 - Data preprocessing at scale via [Dask](https://dask.org/) and 
-[MPI for Python (mpi4py)](https://mpi4py.readthedocs.io/en/stable/): it would 
-even take less than 2 mins to finish preprocessing 
+[MPI for Python (mpi4py)](https://mpi4py.readthedocs.io/en/stable/):
 [BERT](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/LanguageModeling/BERT)'s 
-dataset for pretraining on 32 DGXA100 nodes.
+dataset for pretraining takes less than 2 mins to preprocess on 32 DGXA100 nodes.
+[BART](https://github.com/NVIDIA/DeepLearningExamples/tree/master/PyTorch/LanguageModeling/BART)'s
+dataset for pretraining takes about 2 hrs to preprocess on 4 DGXA100 nodes.
 - Data loading for [PyTorch](https://pytorch.org/) multi-node training workloads 
 with minimum overhead.
 - Sequence binning that can reduce end-to-end training latency.
@@ -164,9 +165,12 @@ commands:
   - [Wikipedia dumps](https://dumps.wikimedia.org/): `download_wikipedia`
   - [Bookcorpus](https://github.com/soskek/bookcorpus/issues/27#issuecomment-716104208) `download_books`
   - [Common Crawl](https://github.com/fhamborg/news-please#news-archive-from-commoncrawlorg) `download_common_crawl`
+  - [OpenWebTextCorpus](https://skylion007.github.io/OpenWebTextCorpus/) `download_open_webtext`
 - Preprocessors:
   - BERT
     - Pretraining: `preprocess_bert_pretrain`
+  - BART
+    - Pretraining: `preprocess_bart_pretrain`
 - Load Balancer: `balance_dask_output`
 
 Please use the `--help` flag to check the exact usage of each command (e.g., 
