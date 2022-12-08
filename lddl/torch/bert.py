@@ -100,6 +100,10 @@ def _to_encoded_inputs(
   attention_mask = torch.zeros_like(input_ids)
   if static_masking:
     labels = torch.full_like(input_ids, ignore_index)
+    loss_mask = torch.zeros(batch_size, batch_seq_len, dtype=torch.long)
+    # TODO: remove for loop
+    for i, indices in enumerate(all_masked_lm_positions):
+      loss_mask[i].scatter_(0, indices, 1.)
   else:
     special_tokens_mask = torch.zeros_like(input_ids)
   # Fill in the input torch.Tensor's.
@@ -128,10 +132,14 @@ def _to_encoded_inputs(
       special_tokens_mask[sample_idx, 0] = 1
       special_tokens_mask[sample_idx, len(tokens_A) + 1] = 1
       special_tokens_mask[sample_idx, len(tokens_A) + len(tokens_B) + 2:] = 1
-  # Compose output dict.
+
+
+  
   encoded_inputs = {
       'input_ids':
           input_ids,
+      'masked_lm_positions':
+        loss_mask,
       'token_type_ids':
           token_type_ids,
       'attention_mask':
