@@ -113,6 +113,7 @@ def read_common_crawl(
       sample_seed=sample_seed,
   )
 
+
 def read_open_webtext(
     path,
     blocksize=None,
@@ -125,6 +126,7 @@ def read_open_webtext(
       sample_ratio=sample_ratio,
       sample_seed=sample_seed,
   )
+
 
 def split_id_text(raw_text):
   # The first token is the document id.
