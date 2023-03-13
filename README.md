@@ -459,7 +459,7 @@ start_epoch = 0
 # dataset once.
 epochs = 2
 
-train_dataloader = lddl.torch.get_bert_pretrain_data_loader(
+train_dataloader = lddl.paddle.get_bert_pretrain_data_loader(
   input_dir,
   vocab_file=vocab_file,
   data_loader_kwargs={
