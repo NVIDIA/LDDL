@@ -39,22 +39,20 @@ from torch.utils.data import get_worker_info
 from lddl.types import File
 from lddl.utils import get_num_samples_of_parquet
 from lddl.random import randrange, shuffle, sample
-from .utils import (get_rank, get_world_size, get_nproc_per_node, get_num_nodes,
-                    get_node_rank, get_dp_size)
+from .utils import (
+    get_rank,
+    get_world_size,
+    get_nproc_per_node,
+    get_num_nodes,
+    get_node_rank,
+    get_dp_size,
+)
 
 
 class ShuffleBuffer:
 
-  def __init__(
-      self,
-      files,
-      max_num_samples_to_yield,
-      decode_record_batch,
-      size,
-      warmup_factor,
-      logger,
-      rng_state,
-  ):
+  def __init__(self, files, max_num_samples_to_yield, decode_record_batch, size,
+               warmup_factor, logger, rng_state, samples_seen):
     num_samples_wasted = (sum(
         (f.num_samples for f in files)) - max_num_samples_to_yield)
     assert 0 <= num_samples_wasted <= len(files)
@@ -66,6 +64,7 @@ class ShuffleBuffer:
     self._warmup_factor = warmup_factor
     self._logger = logger
     self._rng_state = rng_state
+    self.samples_seen = samples_seen
 
   @property
   def num_samples(self):
@@ -82,19 +81,30 @@ class ShuffleBuffer:
     buffer = []
     num_samples_to_yield = min(
         self._max_num_samples_to_yield,
-        sum((f.num_samples for f in self._files)),
+        sum((f.num_samples for f in self._files)) - self.samples_seen,
     )
     remaining_num_samples = num_samples_to_yield
-
     for f in self._files:
       self._logger.to('worker').info('Reading {}'.format(f.path))
-      for b in pq.read_table(f.path).to_batches():
+      if self.samples_seen > 0:
+        len_par = f.num_samples
+        # Skip entire parquet if possible
+        if len_par < self.samples_seen:
+          self.samples_seen -= len_par
+          continue
+      pq_table = pq.read_table(f.path)
+      if self.samples_seen > 0:
+        pq_table = pq_table.slice(self.samples_seen)
+        self.samples_seen = 0
+
+      for b in pq_table.to_batches():
         for sample in self._decode_record_batch(b):
           if remaining_num_samples <= 0:
             return
-          if (len(buffer) >= min(
-              self._size, (num_samples_to_yield - remaining_num_samples + 1) *
-              self._warmup_factor)):
+          if (len(buffer)
+              >= min(self._size,
+                     (num_samples_to_yield - remaining_num_samples + 1) *
+                     self._warmup_factor)):
             replace_idx = self._randrange(len(buffer))
             yield buffer[replace_idx]
             buffer[replace_idx] = sample
@@ -114,6 +124,7 @@ class ParquetDataset(IterableDataset):
   def __init__(
       self,
       file_paths,
+      samples_seen=0,
       transform=lambda x: x,
       local_rank=0,
       dp_rank=0,
@@ -141,6 +152,7 @@ class ParquetDataset(IterableDataset):
     self._epoch = start_epoch - 1
 
     self._logger = logger
+    self.samples_seen = samples_seen
 
     assert len(file_paths) % self._num_nodes == 0
     assert len(file_paths) % self._world_size == 0
@@ -215,7 +227,8 @@ class ParquetDataset(IterableDataset):
     We need to patch PyTorch DataLoader function for this function to behave
     correctly.
     """
-    return self._num_samples_per_file * len(self._files) // self._num_dp_groups
+    return (self._num_samples_per_file * len(self._files) //
+            self._num_dp_groups) - self.samples_seen
 
   @property
   def num_samples_per_file(self):
@@ -270,20 +283,17 @@ class ParquetDataset(IterableDataset):
 
     files = self._world_identical_sample(self._files, k=len(self._files))
     self._logger.to('node').warning('epoch = {}'.format(self._epoch))
-    #self._logger.to('worker').info(
-    #    '\n'.join(['files('] + ['  {}'.format(f) for f in files] + [')']))
 
     rank_files = files[self.dp_rank::self._num_dp_groups]
     worker_files = rank_files[worker_rank::num_workers_per_rank]
 
-    sb = ShuffleBuffer(
-        worker_files,
-        self._num_samples_per_file * len(worker_files),
-        lambda b: self._decode_record_batch(b),
-        self._shuffle_buffer_size,
-        self._shuffle_buffer_warmup_factor,
-        self._logger,
-        self._worker_rng_state,
-    )
-    for sample in iter(sb):
-      yield self._transform(sample)
+    self.sb = ShuffleBuffer(worker_files,
+                            self._num_samples_per_file * len(worker_files),
+                            lambda b: self._decode_record_batch(b),
+                            self._shuffle_buffer_size,
+                            self._shuffle_buffer_warmup_factor, self._logger,
+                            self._worker_rng_state, self.samples_seen)
+    for sample in iter(self.sb):
+      sample = self._transform(sample)
+      yield sample
+    self.samples_seen = 0
