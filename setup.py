@@ -36,9 +36,9 @@ setup(
     'Language Datasets and Data Loaders for NVIDIA Deep Learning Examples',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='github.com/NVIDIA/DeepLearningExamples/tools/lddl',
-    author='Shang Wang',
-    author_email='shangw@nvidia.com',
+    url='https://github.com/NVIDIA/lddl',
+    author='Shang Wang, Joseph Jennings, Bobby Chen, Shijie Wang, Peter Dykas',
+    author_email='jjennings@nvidia.com',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3 :: Only',
@@ -54,10 +54,8 @@ setup(
         'mpi4py==3.1.3',
         'transformers==4.16.2',
         'wikiextractor==3.0.6',
-        'news-please @ git+https://github.com/fhamborg/news-please.git@3b7d9fdfeb148ef73f393bb2f2557e6bd878a09f',
         'cchardet==2.1.7',
         'awscli>=1.22.55',
-        'wikiextractor @ git+https://github.com/attardi/wikiextractor.git@v3.0.6',
         'gdown==4.5.3',
     ],
     entry_points={
