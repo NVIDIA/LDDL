@@ -47,7 +47,7 @@ setup(
     python_requires='>=3.6',
     install_requires=[
         'dask[complete]==2021.7.1',
-        'distributed==2021.7.1',
+        'distributed==2021.10.0',
         'dask-mpi==2021.11.0',
         'bokeh==2.4.3',
         'pyarrow>=4.0.1',
