@@ -17,7 +17,7 @@ RUN apt-get install -y libjemalloc-dev
 WORKDIR /workspace/lddl
 ADD . .
 RUN pip install ./
-RUN pip install h5py
+RUN pip install h5py pandas==1.5.2
 RUN pip install git+https://github.com/NVIDIA/dllogger#egg=dllogger
 
 # Download the NLTK model data.

@@ -30,7 +30,7 @@ import random
 import paddle
 
 from paddle.io import IterableDataset, get_worker_info
-from paddle.fluid.framework import _non_static_mode
+from paddle.fluid.framework import in_dygraph_mode
 
 from lddl.types import File
 from lddl.utils import get_num_samples_of_parquet
@@ -158,7 +158,7 @@ class ParquetDataset(IterableDataset):
     self._worker_rng_state = None
 
   def _get_files(self, file_paths):
-    if _non_static_mode():
+    if in_dygraph_mode():
       all_files_num_samples = paddle.zeros((len(file_paths),), dtype='int64')
     else:
       all_files_num_samples = np.zeros((len(file_paths),), dtype=np.int64)
@@ -187,7 +187,7 @@ class ParquetDataset(IterableDataset):
         all_files_num_samples[idx] = get_num_samples_of_parquet(fp)
     if self._world_size > 1:
       # Sync. accross all ranks.
-      if _non_static_mode():
+      if in_dygraph_mode():
         paddle.distributed.all_reduce(
             all_files_num_samples,
             op=paddle.distributed.ReduceOp.SUM,
