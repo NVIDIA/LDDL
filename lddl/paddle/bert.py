@@ -169,7 +169,7 @@ def _mask_tokens(
     ]
     special_tokens_mask = paddle.to_tensor(special_tokens_mask, dtype='bool')
   else:
-    special_tokens_mask = special_tokens_mask.bool()
+    special_tokens_mask = special_tokens_mask.astype('bool')
 
   # probability_matrix.masked_fill_(special_tokens_mask, value=0.0)
   def _masked_fill(x, mask, value):
@@ -179,21 +179,21 @@ def _mask_tokens(
   probability_matrix = _masked_fill(probability_matrix,
                                     special_tokens_mask,
                                     value=0.0)
-  masked_indices = paddle.bernoulli(probability_matrix).bool()
+  masked_indices = paddle.bernoulli(probability_matrix).astype('bool')
   # We only compute loss on masked tokens
   labels[~masked_indices] = ignore_index
 
   # 80% of the time, we replace masked input tokens with tokenizer.mask_token
   # ([MASK])
-  indices_replaced = (paddle.bernoulli(paddle.full(labels.shape, 0.8)).bool() &
+  indices_replaced = (paddle.bernoulli(paddle.full(labels.shape, 0.8)).astype('bool') &
                       masked_indices)
   inputs[indices_replaced] = tokenizer.convert_tokens_to_ids(
       tokenizer.mask_token)
 
   # 10% of the time, we replace masked input tokens with random word
-  indices_random = (paddle.bernoulli(paddle.full(labels.shape, 0.5)).bool() &
+  indices_random = (paddle.bernoulli(paddle.full(labels.shape, 0.5)).astype('bool') &
                     masked_indices & ~indices_replaced)
-  random_words = paddle.randint(len(tokenizer), labels.shape, dtype='int64')
+  random_words = paddle.randint(high=len(tokenizer), shape=labels.shape, dtype='int64')
   inputs[indices_random] = random_words[indices_random]
 
   # The rest of the time (10% of the time) we keep the masked input tokens
@@ -273,11 +273,11 @@ def get_bert_pretrain_data_loader(
     - If return_raw_samples is False, a dict of 5 key-value pairs which are the
       necessary input for BERT pretraining:
       {
-        'input_ids': a torch.Tensor of size [batch_size, sequence_length],
-        'token_type_ids': a torch.Tensor of size [batch_size, sequence_length],
-        'attention_mask': a torch.Tensor of size [batch_size, sequence_length],
-        'labels': a torch.Tensor of size [batch_size, sequence_length],
-        'next_sentence_labels': a torch.Tensor of size [batch_size],
+        'input_ids': a paddle.Tensor of size [batch_size, sequence_length],
+        'token_type_ids': a paddle.Tensor of size [batch_size, sequence_length],
+        'attention_mask': a paddle.Tensor of size [batch_size, sequence_length],
+        'masked_lm_labels': a paddle.Tensor of size [batch_size, sequence_length],
+        'next_sentence_labels': a paddle.Tensor of size [batch_size],
       }
     - If return_raw_samples is True, a list of the following lists:
       [
@@ -292,7 +292,7 @@ def get_bert_pretrain_data_loader(
       ]
 
   Examples:
-    train_dataloader = lddl.torch.get_bert_pretrain_data_loader(
+    train_dataloader = lddl.paddle.get_bert_pretrain_data_loader(
       input_dir,
       vocab_file=vocab_file,
       data_loader_kwargs={
@@ -307,15 +307,15 @@ def get_bert_pretrain_data_loader(
     for epoch in range(start_epoch, start_epoch + epochs):
       for i, batch in enumerate(train_dataloader):
         prediction_scores, seq_relationship_score = model(
-          input_ids=batch['input_ids'].to(device),
-          token_type_ids=batch['token_type_ids'].to(device),
-          attention_mask=batch['attention_mask'].to(device),
+          input_ids=batch['input_ids'],
+          token_type_ids=batch['token_type_ids'],
+          attention_mask=batch['attention_mask'],
       )
       loss = criterion(
           prediction_scores,
           seq_relationship_score,
-          batch['labels'].to(device),
-          batch['next_sentence_labels'].to(device),
+          batch['masked_lm_labels'],
+          batch['next_sentence_labels'],
       )
       ...
   """
@@ -355,7 +355,7 @@ def get_bert_pretrain_data_loader(
       )
       if 'special_tokens_mask' in encoded_inputs:  # Dynamic masking.
         special_tokens_mask = encoded_inputs.pop('special_tokens_mask', None)
-        (encoded_inputs['input_ids'], encoded_inputs['labels']) = _mask_tokens(
+        (encoded_inputs['input_ids'], encoded_inputs['masked_lm_labels']) = _mask_tokens(
             encoded_inputs['input_ids'],
             special_tokens_mask=special_tokens_mask,
             tokenizer=tokenizer,
