@@ -24,7 +24,7 @@
 
 import os
 import paddle
-from paddle.fluid.framework import _non_static_mode
+from paddle.fluid.framework import in_dygraph_mode
 from paddle.distributed.fleet.base.private_helper_function import wait_server_ready
 
 
@@ -92,7 +92,7 @@ def get_node_rank():
 
 
 def all_reduce_in_static_mode(local_tensor, reduce_op):
-  assert not _non_static_mode(), "this function can only be used in static mode"
+  assert not in_dygraph_mode(), "this function can only be used in static mode"
   rank = get_rank()
   local_rank = get_local_rank()
   nranks = get_world_size()
