@@ -137,14 +137,14 @@ def main(args):
   seq_len_hist = Histogram()
   padded_zero_hist = Histogram()
 
+  step = 0
   for epoch in range(args.start_epoch, args.start_epoch + args.epochs):
     barrier()
     epoch_timer_start = time.time()
     batch_timer_start = time.time()
     total_samples = 0
     for i, data in enumerate(loader):
-      if i >= args.iters_per_epoch:
-        break
+      step += 1
       if not args.debug:
         (input_ids, token_type_ids, attention_mask, masked_lm_labels,
          next_sentence_labels) = (
@@ -228,6 +228,8 @@ def main(args):
               test_tokenizer.convert_ids_to_tokens(input_ids[0].tolist())))
       barrier()
       batch_timer_start = time.time()
+      if step >= args.iters_per_epoch:
+        break
     epoch_timer_stop = time.time()
     epoch_elapsed = epoch_timer_stop - epoch_timer_start
     if get_rank() == 0:
