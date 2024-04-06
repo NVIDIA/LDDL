@@ -50,7 +50,7 @@ setup(
         'distributed==2021.7.1',
         'dask-mpi==2021.11.0',
         'bokeh==2.4.3',
-        'pyarrow>=4.0.1',
+        'pyarrow==14.0.1',
         'mpi4py==3.1.3',
         'transformers==4.16.2',
         'wikiextractor==3.0.6',
