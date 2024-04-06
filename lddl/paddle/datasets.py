@@ -30,7 +30,10 @@ import random
 import paddle
 
 from paddle.io import IterableDataset, get_worker_info
-from paddle.fluid.framework import in_dygraph_mode
+try:
+    from paddle.base.framework import in_dygraph_mode
+except ImportError:
+    from paddle.fluid.framework import in_dygraph_mode
 
 from lddl.types import File
 from lddl.utils import get_num_samples_of_parquet
