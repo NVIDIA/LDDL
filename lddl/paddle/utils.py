@@ -24,7 +24,12 @@
 
 import os
 import paddle
-from paddle.fluid.framework import in_dygraph_mode
+try:
+  from paddle.base.framework import in_dygraph_mode
+  from paddle.base import unique_name, core
+except ImportError:
+  from paddle.fluid.framework import in_dygraph_mode
+  from paddle.fluid import unique_name, core
 from paddle.distributed.fleet.base.private_helper_function import wait_server_ready
 
 
@@ -108,9 +113,9 @@ def all_reduce_in_static_mode(local_tensor, reduce_op):
 
   block = startup_program.global_block()
   nccl_id_var = block.create_var(
-      name=paddle.fluid.unique_name.generate('nccl_id'),
+      name=unique_name.generate('nccl_id'),
       persistable=True,
-      type=paddle.fluid.core.VarDesc.VarType.RAW,
+      type=core.VarDesc.VarType.RAW,
   )
 
   block.append_op(

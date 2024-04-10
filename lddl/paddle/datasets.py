@@ -30,7 +30,10 @@ import random
 import paddle
 
 from paddle.io import IterableDataset, get_worker_info
-from paddle.fluid.framework import in_dygraph_mode
+try:
+  from paddle.base.framework import in_dygraph_mode
+except ImportError:
+  from paddle.fluid.framework import in_dygraph_mode
 
 from lddl.types import File
 from lddl.utils import get_num_samples_of_parquet
@@ -89,9 +92,10 @@ class ShuffleBuffer:
         for isample in self._decode_record_batch(b):
           if remaining_num_samples <= 0:
             return
-          if (len(buffer) >= min(
-              self._size, (num_samples_to_yield - remaining_num_samples + 1) *
-              self._warmup_factor)):
+          if (len(buffer)
+              >= min(self._size,
+                     (num_samples_to_yield - remaining_num_samples + 1) *
+                     self._warmup_factor)):
             replace_idx = self._randrange(len(buffer))
             yield buffer[replace_idx]
             buffer[replace_idx] = isample
