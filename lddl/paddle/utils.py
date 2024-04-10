@@ -25,11 +25,11 @@
 import os
 import paddle
 try:
-    from paddle.base.framework import in_dygraph_mode
-    from paddle.base import unique_name, core
+  from paddle.base.framework import in_dygraph_mode
+  from paddle.base import unique_name, core
 except ImportError:
-    from paddle.fluid.framework import in_dygraph_mode
-    from paddle.fluid import unique_name, core
+  from paddle.fluid.framework import in_dygraph_mode
+  from paddle.fluid import unique_name, core
 from paddle.distributed.fleet.base.private_helper_function import wait_server_ready
 
 
